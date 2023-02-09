@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding" defaultCharsetForPropertiesFiles="UTF-8">
+    <file url="file://$PROJECT_DIR$/part1/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/part1/src/main/java/ru/edu/Auth.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/part1/src/main/java/ru/edu/Basket.java" charset="windows-1251" />
+    <file url="file://$PROJECT_DIR$/part1/src/main/java/ru/edu/Category.java" charset="windows-1251" />
+    <file url="file://$PROJECT_DIR$/part1/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/part1/src/test/java/ru/edu/AppTest.java" charset="windows-1251" />
+    <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+  </component>
+</project>
