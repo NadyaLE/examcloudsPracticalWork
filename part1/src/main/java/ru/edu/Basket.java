@@ -3,7 +3,7 @@ package ru.edu;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Basket{
+public class Basket {
     private final List<Product> products = new ArrayList<>();
 
     public List<Product> getProducts() {
@@ -15,7 +15,7 @@ public class Basket{
         return "Basket:" + products;
     }
 
-    public Basket addProduct(Product product){
+    public Basket addProduct(Product product) {
         products.add(product);
         return this;
     }

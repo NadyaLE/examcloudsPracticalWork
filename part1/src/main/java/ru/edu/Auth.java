@@ -1,45 +1,58 @@
 package ru.edu;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.edu.exception.WrongLoginException;
+import ru.edu.exception.WrongPasswordException;
 
 import java.io.UnsupportedEncodingException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.Scanner;
+import java.util.*;
 
 public class Auth {
-    private static final User[] users = new User[]{new User("lol", "1", new Basket()),
+    private static User[] users = new User[]{new User("lol", "1", new Basket()),
             new User("kek", "2", new Basket()),
-            new User("ok", "3", new Basket()),};
-
-    private static Locale current = new Locale("", "");
+            new User("ok", "3", new Basket())};
+    private static Locale current = new Locale("ru", "RU");
     private static ResourceBundle rb = ResourceBundle.getBundle("text", current);
     private static NumberFormat nf = NumberFormat.getInstance(current);
     private static Scanner scanner = new Scanner(System.in);
+    private static Map<String, User> userMap = new HashMap<>();
+
+    static {
+        for (User user : users) {
+            userMap.put(user.getLogin(), user);
+        }
+    }
 
     public static void main(String[] args) throws UnsupportedEncodingException {
         System.setOut(new java.io.PrintStream(System.out, true, rb.getString("encoding")));
         nf.setMaximumFractionDigits(2);
         User user;
-        String login, password;
+        String login, password, confirmPassword;
+
         while (true) {
             System.out.print(rb.getString("login"));
             login = scanner.nextLine();
             System.out.print(rb.getString("password"));
             password = scanner.nextLine();
-            user = authorization(login, password, users);
-            if (user != null) {
-                System.out.println("-------------------------------------------------------\n" +
-                        rb.getString("greetings") + user.getLogin() + "!\n" +
-                        "-------------------------------------------------------");
-                getMenu(user);
-            } else {
-                System.out.println(rb.getString("userWarning"));
+            System.out.print(rb.getString("confirmPassword"));
+            confirmPassword = scanner.nextLine();
+            try {
+                user = authorization(login, password, userMap, rb);
+                if (user != null) {
+                    System.out.println("-------------------------------------------------------\n" +
+                            rb.getString("greetings") + user.getLogin() + "!\n" +
+                            "-------------------------------------------------------");
+                    getMenu(user);
+                } else {
+                    if (checkLoginAndPass(login, password, confirmPassword, rb)) {
+                        userMap.put(login, new User(login, password, new Basket()));
+                    }
+                }
+            } catch (WrongPasswordException ex) {
+                ex.printStackTrace();
             }
             System.out.println();
         }
@@ -67,7 +80,7 @@ public class Auth {
                                 rb.getString("number"), rb.getString("name"),
                                 rb.getString("price"), rb.getString("rating"));
                         for (Product product : category.getProducts()) {
-                            System.out.println(String.format("%-10d", i++ + 1) + toStringInLocale(product, rb, nf));
+                            System.out.println(String.format("%-10d", i++ + 1) + toStringInLocaleWithFormat(product, rb, nf));
                         }
                     }
                     continue;
@@ -91,7 +104,7 @@ public class Auth {
                     continue;
                 }
                 case 4: {
-                    printPurchases(user,rb,nf);
+                    printPurchases(user, rb, nf);
                     continue;
                 }
                 case 5: {
@@ -100,7 +113,7 @@ public class Auth {
                             nf.format(sum) +
                             rb.getString("countSum").substring(rb.getString("countSum").indexOf("-") + 2) + "  : ");
                     if (scanner.next().startsWith("y")) {
-                        printPurchases(user,rb,nf);
+                        printPurchases(user, rb, nf);
                         user.getBasket().getProducts().clear();
                     }
                     continue;
@@ -110,32 +123,67 @@ public class Auth {
             }
             break;
         }
-
     }
 
-    public static User authorization(final String login, final String password, @NotNull User[] source) {
-        return Arrays.stream(source).filter(user -> user.isAuth(login, password)).findAny().orElse(null);
+    public static User authorization(final String login, final String password, Map<String, User> source, @Nullable ResourceBundle rb)
+            throws WrongPasswordException {
+        if (source.containsKey(login)) {
+            User user = source.values().stream().filter(u -> u.isAuth(login, password)).findAny().orElse(null);
+            if (user == null)
+                throw new WrongPasswordException((rb == null) ? "Entered wrong password!" : rb.getString("enteredWrongPassword"));
+            return user;
+        }
+        return null;
+    }
+
+    public static User authorization(final String login, final String password, Map<String, User> source)
+            throws WrongPasswordException {
+        return authorization(login, password, source, null);
     }
 
     public static <E extends Enum<E>> void printEnumInLocale(E[] en, ResourceBundle rb) {
         Arrays.stream(en).forEach(e -> System.out.println(e.ordinal() + 1 + ". " + ((rb != null) ? rb.getString(e.name()) : e)));
     }
 
-    public static String toStringInLocale(Product product, @Nullable ResourceBundle rb, @Nullable NumberFormat nf) {
+    public static String toStringInLocaleWithFormat(Product product, @Nullable ResourceBundle rb, @Nullable NumberFormat nf) {
         return String.format("%-15s", ((rb == null) ? product.getName() : rb.getString(product.getName().toLowerCase()))) +
                 ((nf == null) ? String.format("%10.2f%10.2f", product.getPrice(), product.getRating()) :
                         String.format("%10s%10s", nf.format(product.getPrice()), nf.format(product.getRating())));
     }
 
+    public static String toStringWithFormat(Product product) {
+        return toStringInLocaleWithFormat(product, null, null);
+    }
+
     public static void printPurchases(User user, ResourceBundle rb, NumberFormat nf) {
-        System.out.printf("%-7s%34s%n%n", rb.getString("date"), LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy",rb.getLocale())));
+        System.out.printf("%-7s%34s%n%n", rb.getString("date"), LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy", rb.getLocale())));
         System.out.printf("%-15s%-15s%10s%n-----------------------------------------%n",
                 rb.getString("products"), rb.getString("category"), rb.getString("price"));
         user.getBasket().getProducts().forEach(e -> System.out.printf("%-15s%-15s%10s%n", rb.getString(e.getName()),
                 rb.getString(Category.getCategoryByProduct(e).toString()), nf.format(e.getPrice())));
-        System.out.printf("-----------------------------------------%n%-7s%34s%n",rb.getString("total"),
+        System.out.printf("-----------------------------------------%n%-7s%34s%n", rb.getString("total"),
                 nf.format(user.getBasket().getProducts().stream().mapToDouble(Product::getPrice).sum()));
     }
+
+    public static boolean checkLoginAndPass(String login, String password, String confirmPassword, @Nullable ResourceBundle rb) {
+        try {
+            if (!login.matches("[a-zA-Z\\d_]+") || login.length() > 20) {
+                throw new WrongLoginException((rb == null) ? "Wrong login!" : rb.getString("wrongLogin"));
+            }
+            if (!password.matches("[a-zA-Z\\d_]+") || !Objects.equals(password, confirmPassword) || password.length() > 20) {
+                throw new WrongPasswordException((rb == null) ? "Wrong password!" : rb.getString("wrongPassword"));
+            }
+        } catch (WrongPasswordException | WrongLoginException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean checkLoginAndPass(String login, String password, String confirmPassword) {
+        return checkLoginAndPass(login, password, confirmPassword, null);
+    }
+
 }
 
 enum Menu {

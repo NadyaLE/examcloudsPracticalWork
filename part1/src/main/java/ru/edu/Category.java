@@ -6,10 +6,10 @@ enum Category {
     SUMMER(new LinkedHashSet<>(List.of(new Product("skirt", 520.35, 4.5),
             new Product("shorts", 670.2, 4.2),
             new Product("top", 810.94532, 4.24989)))),
-    WINTER(new LinkedHashSet<> (List.of(new Product("fur-coat", 50_000, 3.8),
+    WINTER(new LinkedHashSet<>(List.of(new Product("fur-coat", 50_000, 3.8),
             new Product("down-jacket", 6_000, 4.6),
             new Product("scarf", 1_000, 4.8)))),
-    SPRING(new LinkedHashSet<> (List.of(new Product("windbreaker", 3_000, 3.5),
+    SPRING(new LinkedHashSet<>(List.of(new Product("windbreaker", 3_000, 3.5),
             new Product("jeans", 1_500, 4.5),
             new Product("boots", 7_000, 4.8)))),
     AUTUMN(new LinkedHashSet<>(List.of(new Product("jacket", 3_000, 3.5),
@@ -31,8 +31,8 @@ enum Category {
         return products;
     }
 
-    public void sortProducts(List<Product> sortedProducts){
-       products = new LinkedHashSet<>(sortedProducts);
+    public void sortProducts(List<Product> sortedProducts) {
+        products = new LinkedHashSet<>(sortedProducts);
     }
 
     @Override

@@ -1,13 +1,15 @@
 package ru.edu;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import ru.edu.exception.WrongPasswordException;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.fail;
 import static ru.edu.Category.*;
 
 /**
@@ -19,29 +21,26 @@ public class AppTest {
 
     User user1;
     User user2;
-    /**
-     * Rigorous Test :-)
-     */
+
+    Map<String, User> userMap = new HashMap<>();
+
     @Before
-    public void init(){
+    public void init() {
         basket1 = new Basket().addProduct(SPRING.getProducts().get(0)).addProduct(SUMMER.getProducts().get(1));
-                //new Basket(new Product[]{SPRING.getProducts()[0], });
+        //new Basket(new Product[]{SPRING.getProducts()[0], });
         user1 = new User("lol", "1234", basket1);
 
         basket2 = new Basket().addProduct(SPRING.getProducts().get(2)).addProduct(SUMMER.getProducts().get(1));
-    //new Product[]{SPRING.getProducts()[2], SUMMER.getProducts()[1]});
+        //new Product[]{SPRING.getProducts()[2], SUMMER.getProducts()[1]});
         user2 = new User("kek", "1111", basket2);
+
+        userMap.put("lol", user1);
+        userMap.put("kek", user2);
     }
 
 
     @Test
-    public void shouldAnswerWithTrue()
-    {
-        System.out.println(SPRING);
-        System.out.println(SUMMER);
-        System.out.println(WINTER);
-        System.out.println(user1);
-        System.out.println(user2);
+    public void shouldAnswerWithTrue() {
         assertSame(user1.getBasket().getProducts().get(0), SPRING.getProducts().get(0));
         SPRING.addProduct(new Product("happiness", 12, 5));
         ArrayList<Product> productList = SUMMER.getProducts();
@@ -53,7 +52,20 @@ public class AppTest {
         WINTER.getProducts().forEach(e -> System.out.println(e + "  =  " + e.hashCode()));
     }
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
+    @Test()
+    public void testAuthorization() {
+        try {
+            assertSame(Auth.authorization("lil", "1", userMap), null);
+            assertSame(Auth.authorization("lol", "1234", userMap), user1);
+            thrown.expect(RuntimeException.class);
+            Auth.authorization("lol", "1", userMap);
+        } catch (WrongPasswordException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
 
 

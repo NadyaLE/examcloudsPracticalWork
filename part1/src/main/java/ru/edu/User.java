@@ -26,7 +26,7 @@ public class User {
         this.basket = basket;
     }
 
-    public boolean isAuth(String login, String password){
+    public boolean isAuth(String login, String password) {
         return Objects.equals(this.login, login) && Objects.equals(this.password, password);
     }
 
