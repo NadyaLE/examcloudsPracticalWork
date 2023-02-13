@@ -1,6 +1,6 @@
 package ru.edu;
 
-import java.util.ResourceBundle;
+import java.util.Objects;
 
 /**
  * Hello world!
@@ -21,6 +21,19 @@ public class Product {
         this.name = name;
         this.price = price;
         this.rating = rating;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Product product = (Product) o;
+        return Double.compare(product.price, price) == 0 && Double.compare(product.rating, rating) == 0 && Objects.equals(name, product.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, price, rating);
     }
 
     public String getName() {

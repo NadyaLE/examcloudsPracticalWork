@@ -78,8 +78,8 @@ public class Auth {
                     if ((category = Category.valueOf(choice - 1)) != null) {
                         System.out.print(rb.getString("productNumber"));
                         choice = scanner.nextInt();
-                        if (choice > 0 && choice <= category.getProducts().length) {
-                            Product product = category.getProducts()[choice - 1];
+                        if (choice > 0 && choice <= category.getProducts().size()) {
+                            Product product = category.getProducts().get(choice - 1);
                             System.out.println(rb.getString("addProduct").substring(0, rb.getString("addProduct").indexOf("\"") + 1) +
                                     rb.getString(product.getName()) +
                                     rb.getString("addProduct").substring(rb.getString("addProduct").indexOf("\"") + 1));
