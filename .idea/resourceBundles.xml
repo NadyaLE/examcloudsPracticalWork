@@ -2,12 +2,20 @@
 <project version="4">
   <component name="ResourceBundleManager">
     <file url="file://$PROJECT_DIR$/part1/resources/text.properties" />
+    <file url="file://$PROJECT_DIR$/part1/resources/text_de_DE.properties" />
     <file url="file://$PROJECT_DIR$/part1/resources/text_ru_RU.properties" />
-    <file url="file://$PROJECT_DIR$/part1/resources/text_text_de_DE.properties" />
     <file url="file://$PROJECT_DIR$/part1/resources/text_uk_UA.properties" />
     <custom-resource-bundle>
       <file value="file://$PROJECT_DIR$/part1/resources/text.properties" />
       <file value="file://$PROJECT_DIR$/part1/resources/text_de_DE.properties" />
+      <file value="file://$PROJECT_DIR$/part1/resources/text_ru_RU.properties" />
+      <file value="file://$PROJECT_DIR$/part1/resources/text_uk_UA.properties" />
+      <base-name>text</base-name>
+    </custom-resource-bundle>
+    <custom-resource-bundle>
+      <file value="file://$PROJECT_DIR$/part1/resources/text.properties" />
+      <file value="file://$PROJECT_DIR$/part1/resources/text_de_DE.properties" />
+      <file value="file://$PROJECT_DIR$/part1/resources/text_en.properties" />
       <file value="file://$PROJECT_DIR$/part1/resources/text_ru_RU.properties" />
       <file value="file://$PROJECT_DIR$/part1/resources/text_uk_UA.properties" />
       <base-name>text</base-name>

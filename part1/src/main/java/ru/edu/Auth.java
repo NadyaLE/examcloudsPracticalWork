@@ -4,17 +4,22 @@ import org.jetbrains.annotations.Nullable;
 import ru.edu.exception.WrongLoginException;
 import ru.edu.exception.WrongPasswordException;
 
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+
+import static java.lang.System.out;
+
 import java.util.*;
 
 public class Auth {
     private static User[] users = new User[]{new User("lol", "1", new Basket()),
             new User("kek", "2", new Basket()),
             new User("ok", "3", new Basket())};
-    private static Locale current = new Locale("ru", "RU");
+    private static Locale current = Locale.US;
     private static ResourceBundle rb = ResourceBundle.getBundle("text", current);
     private static NumberFormat nf = NumberFormat.getInstance(current);
     private static Scanner scanner = new Scanner(System.in);
@@ -26,27 +31,28 @@ public class Auth {
         }
     }
 
-    public static void main(String[] args) throws UnsupportedEncodingException {
+    public static void main(String... args) throws UnsupportedEncodingException {
         System.setOut(new java.io.PrintStream(System.out, true, rb.getString("encoding")));
         nf.setMaximumFractionDigits(2);
         User user;
         String login, password, confirmPassword;
 
         while (true) {
-            System.out.print(rb.getString("login"));
+            out.print(rb.getString("login"));
             login = scanner.nextLine();
-            System.out.print(rb.getString("password"));
+            out.print(rb.getString("password"));
             password = scanner.nextLine();
-            System.out.print(rb.getString("confirmPassword"));
-            confirmPassword = scanner.nextLine();
+
             try {
                 user = authorization(login, password, userMap, rb);
                 if (user != null) {
-                    System.out.println("-------------------------------------------------------\n" +
+                    out.println("-------------------------------------------------------\n" +
                             rb.getString("greetings") + user.getLogin() + "!\n" +
                             "-------------------------------------------------------");
                     getMenu(user);
                 } else {
+                    out.print(rb.getString("confirmPassword"));
+                    confirmPassword = scanner.nextLine();
                     if (checkLoginAndPass(login, password, confirmPassword, rb)) {
                         userMap.put(login, new User(login, password, new Basket()));
                     }
@@ -63,37 +69,37 @@ public class Auth {
         System.out.println(rb.getString("menu"));
         printEnumInLocale(Menu.values(), rb);
         while (true) {
-            System.out.print("\n" + rb.getString("selectMenuItem"));
+            out.print("\n" + rb.getString("selectMenuItem"));
             int choice = scanner.nextInt();
             switch (choice) {
                 case 1: {
-                    System.out.println("\n" + rb.getString("directoryList"));
+                    out.println("\n" + rb.getString("directoryList"));
                     printEnumInLocale(Category.values(), rb);
                     continue;
                 }
                 case 2: {
-                    System.out.print(rb.getString("selectCatalog"));
+                    out.print(rb.getString("selectCatalog"));
                     choice = scanner.nextInt();
                     int i = 0;
                     if ((category = Category.valueOf(choice - 1)) != null) {
-                        System.out.printf("%-10s%-15s%10s%10s%n---------------------------------------------%n",
+                        out.printf("%-10s%-15s%10s%10s%n---------------------------------------------%n",
                                 rb.getString("number"), rb.getString("name"),
                                 rb.getString("price"), rb.getString("rating"));
                         for (Product product : category.getProducts()) {
-                            System.out.println(String.format("%-10d", i++ + 1) + toStringInLocaleWithFormat(product, rb, nf));
+                            out.println(String.format("%-10d", i++ + 1) + toStringInLocaleWithFormat(product, rb, nf));
                         }
                     }
                     continue;
                 }
                 case 3: {
-                    System.out.print(rb.getString("catalogNumber"));
+                    out.print(rb.getString("catalogNumber"));
                     choice = scanner.nextInt();
                     if ((category = Category.valueOf(choice - 1)) != null) {
-                        System.out.print(rb.getString("productNumber"));
+                        out.print(rb.getString("productNumber"));
                         choice = scanner.nextInt();
                         if (choice > 0 && choice <= category.getProducts().size()) {
                             Product product = category.getProducts().get(choice - 1);
-                            System.out.println(rb.getString("addProduct").substring(0, rb.getString("addProduct").indexOf("\"") + 1) +
+                            out.println(rb.getString("addProduct").substring(0, rb.getString("addProduct").indexOf("\"") + 1) +
                                     rb.getString(product.getName()) +
                                     rb.getString("addProduct").substring(rb.getString("addProduct").indexOf("\"") + 1));
                             if (scanner.next().compareToIgnoreCase("y") == 0) {
@@ -104,16 +110,17 @@ public class Auth {
                     continue;
                 }
                 case 4: {
-                    printPurchases(user, rb, nf);
+                    printPurchases(user, rb, nf, out);
                     continue;
                 }
                 case 5: {
                     double sum = user.getBasket().getProducts().stream().mapToDouble(Product::getPrice).sum();
-                    System.out.print(rb.getString("countSum").substring(0, rb.getString("countSum").indexOf("-") + 2) +
+                    out.print(rb.getString("countSum").substring(0, rb.getString("countSum").indexOf("-") + 2) +
                             nf.format(sum) +
                             rb.getString("countSum").substring(rb.getString("countSum").indexOf("-") + 2) + "  : ");
                     if (scanner.next().startsWith("y")) {
-                        printPurchases(user, rb, nf);
+                        //      printPurchases(user, rb, nf, out);
+                        safePurchases(user, ".\\part1\\Files\\out.txt", rb, nf);
                         user.getBasket().getProducts().clear();
                     }
                     continue;
@@ -155,14 +162,37 @@ public class Auth {
         return toStringInLocaleWithFormat(product, null, null);
     }
 
-    public static void printPurchases(User user, ResourceBundle rb, NumberFormat nf) {
-        System.out.printf("%-7s%34s%n%n", rb.getString("date"), LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy", rb.getLocale())));
-        System.out.printf("%-15s%-15s%10s%n-----------------------------------------%n",
-                rb.getString("products"), rb.getString("category"), rb.getString("price"));
-        user.getBasket().getProducts().forEach(e -> System.out.printf("%-15s%-15s%10s%n", rb.getString(e.getName()),
-                rb.getString(Category.getCategoryByProduct(e).toString()), nf.format(e.getPrice())));
-        System.out.printf("-----------------------------------------%n%-7s%34s%n", rb.getString("total"),
-                nf.format(user.getBasket().getProducts().stream().mapToDouble(Product::getPrice).sum()));
+    public static void printPurchases(User user, ResourceBundle rb, NumberFormat nf, Object cl) {
+        try {
+            Method method = cl.getClass().getMethod("printf", String.class, Object[].class);
+
+            method.invoke(cl, "%-7s%33s%n%n%-15s%-15s%10s%n-----------------------------------------%n",
+                    new Object[]{rb.getString("date"), LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy", rb.getLocale())),
+                            rb.getString("products"), rb.getString("category"), rb.getString("price")});
+
+            user.getBasket().getProducts().forEach(e -> {
+                try {
+                    method.invoke(cl, "%-15s%-15s%10s%n", new Object[]{rb.getString(e.getName()),
+                            rb.getString(Category.getCategoryByProduct(e).toString()), nf.format(e.getPrice())});
+                } catch (IllegalAccessException | InvocationTargetException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+            method.invoke(cl, "-----------------------------------------%n%-7s%33s%n", new Object[]{rb.getString("total"),
+                    nf.format(user.getBasket().getProducts().stream().mapToDouble(Product::getPrice).sum())});
+        } catch (NoSuchMethodException | SecurityException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void safePurchases(User user, String path, ResourceBundle rb, NumberFormat nf) {
+        try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(path)))) {
+            printPurchases(user, rb, nf, writer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static boolean checkLoginAndPass(String login, String password, String confirmPassword, @Nullable ResourceBundle rb) {

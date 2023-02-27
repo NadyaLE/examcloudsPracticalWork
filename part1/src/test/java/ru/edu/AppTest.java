@@ -6,10 +6,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import ru.edu.exception.WrongPasswordException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
 import static ru.edu.Category.*;
 
 /**

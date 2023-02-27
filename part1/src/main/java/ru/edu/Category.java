@@ -8,13 +8,13 @@ enum Category {
             new Product("top", 810.94532, 4.24989)))),
     WINTER(new LinkedHashSet<>(List.of(new Product("fur-coat", 50_000, 3.8),
             new Product("down-jacket", 6_000, 4.6),
-            new Product("scarf", 1_000, 4.8)))),
+            new Product("scarf", 1000, 4.8)))),
     SPRING(new LinkedHashSet<>(List.of(new Product("windbreaker", 3_000, 3.5),
-            new Product("jeans", 1_500, 4.5),
+            new Product("jeans", 1500, 4.5),
             new Product("boots", 7_000, 4.8)))),
     AUTUMN(new LinkedHashSet<>(List.of(new Product("jacket", 3_000, 3.5),
-            new Product("sweater", 2_800, 4.33),
-            new Product("pants", 4_000, 4.11))));
+            new Product("sweater", 2800, 4.33),
+            new Product("pants", 4000, 4.11))));
 
     private Set<Product> products;
 
