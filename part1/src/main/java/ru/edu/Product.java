@@ -1,11 +1,13 @@
 package ru.edu;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * Hello world!
  */
-public class Product {
+public class Product implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String name;
     private double price;
     private double rating;

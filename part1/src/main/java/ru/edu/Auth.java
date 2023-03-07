@@ -110,7 +110,7 @@ public class Auth {
                     continue;
                 }
                 case 4: {
-                    printPurchases(user, rb, nf, out);
+                    printPurchases(user.getBasket(), out, rb, nf);
                     continue;
                 }
                 case 5: {
@@ -120,7 +120,11 @@ public class Auth {
                             rb.getString("countSum").substring(rb.getString("countSum").indexOf("-") + 2) + "  : ");
                     if (scanner.next().startsWith("y")) {
                         //      printPurchases(user, rb, nf, out);
-                        safePurchases(user, ".\\part1\\Files\\out.txt", rb, nf);
+                        serialize(user.getBasket(), ".\\part1\\Files\\outSerial.txt");
+                        safePurchases(user.getBasket(), ".\\part1\\Files\\out.txt", rb, nf);
+                        Basket basket = deserialize(".\\part1\\Files\\outSerial.txt");
+                        out.println(basket);
+                        out.println(basket.getProducts().equals(user.getBasket().getProducts()));
                         user.getBasket().getProducts().clear();
                     }
                     continue;
@@ -130,6 +134,27 @@ public class Auth {
             }
             break;
         }
+    }
+
+    public static User authorization(final String login, final String password, Map<String, User> source)
+            throws WrongPasswordException {
+        return authorization(login, password, source, null);
+    }
+
+    public static <E extends Enum<E>> void printEnum(E[] en) {
+        printEnumInLocale(en, null);
+    }
+
+    public static String toStringWithFormat(Product product) {
+        return toStringInLocaleWithFormat(product, null, null);
+    }
+
+    public static boolean checkLoginAndPass(String login, String password, String confirmPassword) {
+        return checkLoginAndPass(login, password, confirmPassword, null);
+    }
+
+    public static <E extends Enum<E>> void printEnumInLocale(E[] en, ResourceBundle rb) {
+        Arrays.stream(en).forEach(e -> System.out.println(e.ordinal() + 1 + ". " + ((rb != null) ? rb.getString(e.name()) : e)));
     }
 
     public static User authorization(final String login, final String password, Map<String, User> source, @Nullable ResourceBundle rb)
@@ -143,54 +168,42 @@ public class Auth {
         return null;
     }
 
-    public static User authorization(final String login, final String password, Map<String, User> source)
-            throws WrongPasswordException {
-        return authorization(login, password, source, null);
-    }
-
-    public static <E extends Enum<E>> void printEnumInLocale(E[] en, ResourceBundle rb) {
-        Arrays.stream(en).forEach(e -> System.out.println(e.ordinal() + 1 + ". " + ((rb != null) ? rb.getString(e.name()) : e)));
-    }
-
     public static String toStringInLocaleWithFormat(Product product, @Nullable ResourceBundle rb, @Nullable NumberFormat nf) {
         return String.format("%-15s", ((rb == null) ? product.getName() : rb.getString(product.getName().toLowerCase()))) +
                 ((nf == null) ? String.format("%10.2f%10.2f", product.getPrice(), product.getRating()) :
                         String.format("%10s%10s", nf.format(product.getPrice()), nf.format(product.getRating())));
     }
 
-    public static String toStringWithFormat(Product product) {
-        return toStringInLocaleWithFormat(product, null, null);
-    }
-
-    public static void printPurchases(User user, ResourceBundle rb, NumberFormat nf, Object cl) {
-        try {
-            Method method = cl.getClass().getMethod("printf", String.class, Object[].class);
-
-            method.invoke(cl, "%-7s%33s%n%n%-15s%-15s%10s%n-----------------------------------------%n",
-                    new Object[]{rb.getString("date"), LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy", rb.getLocale())),
-                            rb.getString("products"), rb.getString("category"), rb.getString("price")});
-
-            user.getBasket().getProducts().forEach(e -> {
-                try {
-                    method.invoke(cl, "%-15s%-15s%10s%n", new Object[]{rb.getString(e.getName()),
-                            rb.getString(Category.getCategoryByProduct(e).toString()), nf.format(e.getPrice())});
-                } catch (IllegalAccessException | InvocationTargetException ex) {
-                    throw new RuntimeException(ex);
-                }
-            });
-            method.invoke(cl, "-----------------------------------------%n%-7s%33s%n", new Object[]{rb.getString("total"),
-                    nf.format(user.getBasket().getProducts().stream().mapToDouble(Product::getPrice).sum())});
-        } catch (NoSuchMethodException | SecurityException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException | IllegalAccessException e) {
+    public static void safePurchases(Basket basket, String path, ResourceBundle rb, NumberFormat nf) {
+        try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(path)))) {
+            printPurchases(basket, writer, rb, nf);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void safePurchases(User user, String path, ResourceBundle rb, NumberFormat nf) {
-        try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(path)))) {
-            printPurchases(user, rb, nf, writer);
-        } catch (IOException e) {
+    public static void printPurchases(Basket basket, Object type, ResourceBundle rb, NumberFormat nf) {
+        try {
+            if (type.getClass() == PrintStream.class || type.getClass() == PrintWriter.class) {
+                Method method = type.getClass().getMethod("printf", String.class, Object[].class);
+                method.invoke(type, "%-7s%33s%n%n%-15s%-15s%10s%n-----------------------------------------%n",
+                        new Object[]{rb.getString("date"), LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy", rb.getLocale())),
+                                rb.getString("products"), rb.getString("category"), rb.getString("price")});
+
+                basket.getProducts().forEach(e -> {
+                    try {
+                        method.invoke(type, "%-15s%-15s%10s%n", new Object[]{rb.getString(e.getName()),
+                                rb.getString(Category.getCategoryByProduct(e).toString()), nf.format(e.getPrice())});
+                    } catch (IllegalAccessException | InvocationTargetException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                });
+                method.invoke(type, "-----------------------------------------%n%-7s%33s%n", new Object[]{rb.getString("total"),
+                        nf.format(basket.getProducts().stream().mapToDouble(Product::getPrice).sum())});
+            }
+        } catch (NoSuchMethodException | SecurityException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }
@@ -209,11 +222,24 @@ public class Auth {
         }
         return true;
     }
-
-    public static boolean checkLoginAndPass(String login, String password, String confirmPassword) {
-        return checkLoginAndPass(login, password, confirmPassword, null);
+    private static <T extends Serializable> void serialize(T obj, String file) {
+        try (FileOutputStream fs = new FileOutputStream(file);
+             ObjectOutputStream os = new ObjectOutputStream(fs)) {
+            os.writeObject(obj);
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
     }
-
+    private static <T extends Serializable> T deserialize(String file) {
+        T obj = null;
+        try (FileInputStream fis = new FileInputStream(file);
+             ObjectInputStream ois = new ObjectInputStream(fis)) {
+            obj = (T) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println(e.getMessage());
+        }
+        return obj;
+    }
 }
 
 enum Menu {
